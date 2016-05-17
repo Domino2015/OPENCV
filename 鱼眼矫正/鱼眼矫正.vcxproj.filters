@@ -60,5 +60,14 @@
     <ClCompile Include="15（图片识别人脸）.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
+    <ClCompile Include="16（视频人脸识别）.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="17（整合）.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="18（高斯函数）.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
   </ItemGroup>
 </Project>
