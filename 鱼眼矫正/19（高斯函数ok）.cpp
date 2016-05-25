@@ -47,19 +47,19 @@ int main(int argc, unsigned char* argv[])
 	//打开摄像头，0代表默认摄像头，1代表次摄像头
 	VideoCapture cam(1);
 	//判断摄像头是否正常打开
-	if (!cam.isOpened()){return -1;}
+	if (!cam.isOpened()){ return -1; }
 
 	while (1)
 	{
 		Mat frame;//创建一个Mat用于储存视频读取一帧图像
 		//读取一帧图像
 		cam >> frame;
-		if (frame.empty()){return -1;}//判断读取一帧图像是否错误
-			
+		if (frame.empty()){ return -1; }//判断读取一帧图像是否错误
+
 		//人脸识别文件打开判断
 		if (!face_cascade.load(face_cascade_name)){ printf("open faces faile"); return -1; }//判断人脸识别分类器是否正常打开
 		if (!eyes_cascade.load(eyes_cascade_name)){ printf("open eyes faile"); return -1; }//判断眼睛识别分类器是否正常打开
-		storage = cvCreateMemStorage(0); 
+		storage = cvCreateMemStorage(0);
 		detectAndDisplay(frame);//调用函数实现人脸识别
 
 		char c;
@@ -88,13 +88,13 @@ void detectAndDisplay(Mat& frame)
 		0,
 		Size(20, 20));
 	/**detectMultiScale()函数参数说明
-	    1.image表示的是要检测的输入图像
-		2.objects表示检测到的人脸目标序列
-		3.scaleFactor表示每次图像尺寸减小的比例
-		4. minNeighbors表示每一个目标至少要被检测到3次才算是真的目标(因为周围的像素和不同的窗口大小都可以检测到人脸),
-		5.minSize为目标的最小尺寸
-		6.minSize为目标的最大尺寸
-		*/
+	1.image表示的是要检测的输入图像
+	2.objects表示检测到的人脸目标序列
+	3.scaleFactor表示每次图像尺寸减小的比例
+	4. minNeighbors表示每一个目标至少要被检测到3次才算是真的目标(因为周围的像素和不同的窗口大小都可以检测到人脸),
+	5.minSize为目标的最小尺寸
+	6.minSize为目标的最大尺寸
+	*/
 	for (size_t i = 0; i < faces.size(); i++)
 	{
 		Mat faceROI = frame_gray(faces[i]);//选取人脸区域为ROI区域
@@ -103,18 +103,22 @@ void detectAndDisplay(Mat& frame)
 		//圈出人脸区域的形状，ellipse圆形，rectangle矩形
 		//Point center(faces[i].x + faces[i].width / 2, faces[i].y + faces[i].height / 2);//确定人脸检测的圆心
 		//ellipse(frame, center, Size(faces[i].width / 2, faces[i].height / 2), 0, 0, 360, Scalar(255, 0, 0), 2, 8, 0);
-		rectangle(frame, faces[i], Scalar(255, 0, 0), 2, 8, 0);
+		//rectangle(frame, faces[i], Scalar(255, 0, 0), 2, 8, 0);
 		//参数为：承载的图像、顶点、对角点、颜色（这里是蓝色）、粗细、大小 
 
 		//输出人脸区域左上角坐标，区域宽度，长度
 		cout << "(" << faces[i].x << " , " << faces[i].y << ")" << "    ";
-		cout<< "(" << faces[i].width << " , " << faces[i].height << ")" << endl;
+		cout << "(" << faces[i].width << " , " << faces[i].height << ")" << endl;
+		double x1, y1;
+		x1 = faces[i].x;
+		y1 = faces[i].y;
 		//=======变形操作=============
 		Mat out;//定义一个处理变形后的mat
 		Mat map_x, map_y;
 		int ox, oy;//图像中心
 		//选取人脸区域为ROI区域
 		faceROI = frame(Rect(faces[i].x, faces[i].y, faces[i].width, faces[i].height));
+		faceROI.copyTo(out);
 		//设置图片中心为原点（oy,ox）
 		oy = faceROI.cols / 2;
 		ox = faceROI.rows / 2;
@@ -135,26 +139,63 @@ void detectAndDisplay(Mat& frame)
 				double newY = j - oy;//经过原点变化的Y坐标
 				theta = atan2(newY, newX);//极坐标转换得到角度theta
 				range = hypot(newX, newY);//极坐标转换得到半径range
-				rangeMax = 100;//定义最大半径
+				rangeMax = ox;//定义最大半径
+				double e = 2.718;
 				newRange = range / rangeMax;//归一化
-
-				double sigx = sqrt(-1 / (2 * log(0.01))) * faceROI.rows / 2;
-				double sigy = sqrt(-1 / (2 * log(0.01))) * faceROI.cols / 2;
-				double mask = sqrt(     exp(-0.5*(newX*newX) / (sigx*sigx)  ) *exp(-0.5*(newY*newY) / (sigy *sigy) )    );
-				newRange = mask*pow(newRange, 0.5) + (1-mask)*pow(newRange, 0.7);//进行图像变形算法--凸起
-				//newRange = pow(newRange, 2);//进行图像变形算法--凹陷
+				double sigx = -0.5*(ox*ox / log(0.0001));
+				double sigy = -0.5*(oy*oy / log(0.0001));
+				//double maskx = -(1 /(2 * CV_PI*sigx))*pow(e, -(range*range) / (2 * sigx));
+				//double masky = -(1 /( 2 * CV_PI*sigy))*pow(e, -(range*range) / (2 * sigy));
+				//newRange = (maskx*pow(newRange, 0.8) + (1 - maskx)*newRange)*rangeMax;
+				double mask = pow(e, -((newX*newX) / (2 * sigx) + (newY*newY) / (2 * sigy)));
+				if (mask <= 1)
+				{
+					newRange = mask*pow(newRange, 0.5) + (1 - mask)*newRange;//进行图像变形算法--凹陷
+					//cout << mask << endl;
+				}
+				else
+				{
+					newRange = pow(newRange, 0.5);
+				}
+				//cout << mask/10 << endl;
+				//double maskY = int(pow(e, -newY*newY / 10) / sqrt(29.0)*sqrt(2 * CV_PI) * 1000);
+				//maskX = maskX/ 1000;
+				//maskY = maskY / 1000;
+				//cout << maskX << "   " << maskY << endl;
+				//double newRangex = (maskx*pow(newRange, 0.5) + (1 - maskx)*newRange)*rangeMax;//*--凸起
+				//double newRangey = (masky*pow(newRange, 0.5) + (1 - masky)*newRange)*rangeMax;//*--凸起
+				//cout << maskx << endl;
+				//cout << pow(e, -(range*range) / (2 * sigx)) << "     " << (1/(2* 3.14*sigx)) << endl;
+				//newRange = mask*pow(newRange, 0.8)+(1-mask)*newRange;//进行图像变形算法--凹陷
+				//newRange = pow(newRange, 0.8);
 				//newRange = sin(newRange*CV_PI / 2);//进行图像变形算法--拉扯
 				//newRange = tan(newRange*CV_PI / 4);
 				newRange = newRange*rangeMax;
 				//改变map_x & map_y的值. 
 				map_x.at<float>(j, i) = static_cast<float>(newRange*cos(theta) + ox);//转换为直角坐标，并把坐标中心还原
 				map_y.at<float>(j, i) = static_cast<float>(newRange*sin(theta) + oy);
+
 			}
 		}
 		//进行重映射操作
 		remap(faceROI, out, map_x, map_y, CV_INTER_LINEAR, BORDER_CONSTANT, Scalar(0, 0, 0));
-		imshow("ROI处理后", out);
+		if (out.data&&frame.data)
+		{
+
+			Mat img;
+			frame.copyTo(img);
+			Mat logo = imread("lena.bmp");
+			Mat imgROI = img(Rect(x1, y1, out.cols, out.rows));
+
+			Mat mask = imread("lena.bmp", 0);
+			out.copyTo(imgROI, mask);
+
+			namedWindow("haha...");
+			imshow("haha...", img);
+		}
+
+		imshow("ROI", out);
+
 	}
 	imshow("人脸识别", frame);
 }
-

@@ -66,7 +66,10 @@
     <ClCompile Include="17（整合）.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
-    <ClCompile Include="18（高斯函数）.cpp">
+    <ClCompile Include="18（把roi区域放入原视频）.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="19（高斯函数ok）.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
   </ItemGroup>

@@ -156,7 +156,8 @@
     <ClCompile Include="15（图片识别人脸）.cpp" />
     <ClCompile Include="16（视频人脸识别）.cpp" />
     <ClCompile Include="17（整合）.cpp" />
-    <ClCompile Include="18（高斯函数）.cpp" />
+    <ClCompile Include="18（把roi区域放入原视频）.cpp" />
+    <ClCompile Include="19（高斯函数ok）.cpp" />
     <ClCompile Include="4（ok）.cpp" />
     <ClCompile Include="1.cpp" />
     <ClCompile Include="3.cpp" />
